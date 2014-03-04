@@ -27,7 +27,7 @@ class Dendrite:
 		self.PDE.Assemble(D,self.a,0)
 		self.PDE.Precondition(self.PDE.A)
 
-	def AddSpine(self):
+	def AddSpine(self,drift=0.01):
 		"""m is the total number of mesh-points on the dendrite"""
 		m0 = 0
 		n0 = self.m+1
@@ -35,8 +35,9 @@ class Dendrite:
 		while n0>=self.m:
 			n0 = random.randint(m0+1,m0+self.max_spine_contact_point)
 
-		self.spines.append(Spine())
+		self.spines.append(Spine(n0-m0))
 		self.indeces.append([m0,n0])
+		self.spines[-1].SetDrift(drift)
 		print "spine added at index %d, %d"%(m0,n0)
 
 	def Combine(self,spine,m,n):
@@ -45,7 +46,7 @@ class Dendrite:
 			self.U[m+int(round(element.r[0]/DX))] += self.conversion_factor
 
 		tmp = 0
-		spine.dendrite_boundary = []
+		del spine.dendrite_boundary[:]
 		for j in xrange(n-m):
 			tmp += self.U[m+j]
 
@@ -63,6 +64,8 @@ class Dendrite:
 				spine.AddSpike()
 			for j in xrange(steps):
 				spine.Solve()
+			if len(spine.Ions)>0:
+				print "spine #",i," has %d \"ions\" "%len(spine.Ions)
 			m0 = self.indeces[i][0]
 			n0 = self.indeces[i][1]
 			self.Combine(spine,m0,n0)
