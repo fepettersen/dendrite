@@ -4,21 +4,34 @@ import numpy as np, glob
 import matplotlib.pyplot as mpl,matplotlib.animation as animation
 
 
-n_spines = 4
+n_spines = 0
 
 m = 101
 T = 100
 dx = 1.0/(m+1)
 dt = dx**2/2.0
 D = np.ones(m)
+drift = 0.3
+
+Rm = 10**4
+Cm = 0.002
+radius = 1e-6
+Rl = 0.352
+
+
+rm = Rm/(2*np.pi*radius)
+cm = Cm*2*np.pi*radius
+rl = Rl/(np.pi*radius**2)
+
 x = np.linspace(0,1,m)
 
 def InitialCondition(x,x0=0.1,sigma=0.07):
-	# return np.exp(-(x-x0)**2/(2*sigma**2))
-	return np.zeros(np.shape(x))
+	return np.exp(-(x-x0)**2/(2*sigma**2))
+	# return np.zeros(np.shape(x))
 
 dendrite = Dendrite(dt,m)
-dendrite.SetInitialCondition(InitialCondition(x),D*2)
+# dendrite.SetInitialCondition(InitialCondition(x),D*2,drift)
+dendrite.SetInitialCondition(InitialCondition(x),rm,cm,rl)
 
 for i in xrange(n_spines):
 	dendrite.AddSpine(drift=0.1)
@@ -63,7 +76,7 @@ for t in xrange(T):
 	# U_plot[:,0] = dendrite.U.copy()
 	# U_plot[:,1] = dendrite.U.copy()
 	# im.append(mpl.contour(X,Y,U_plot))
-	print "step %d of %d"%(t+1,T)
+	# print "step %d of %d"%(t+1,T)
 
 ani = animation.ArtistAnimation(fig,im,interval=180,blit=True)
 mpl.show()

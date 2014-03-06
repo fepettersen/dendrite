@@ -21,10 +21,21 @@ class Dendrite:
 	def SetSpineSpikeProbabilityThreshold(self,value):
 		self.spine_spike_probability_threshold = value
 
-	def SetInitialCondition(self,U0,D):
+	# def SetInitialCondition(self,U0,D,v=0):
+	# 	dx = 1.0/(self.m+1)
+	# 	dt = self.a*(2*dx*dx)
+	# 	drift = v*dt/(2*dx)
+	# 	self.Up = U0
+	# 	self.U = np.zeros(np.shape(U0))
+	# 	self.PDE.Assemble(D,self.a,0,drift)
+	# 	self.PDE.Precondition(self.PDE.A)
+
+	def SetInitialCondition(self,U0,r_m,c_m,r_l):
+		dx = 1.0/(self.m+1)
+		dt = self.a*(2*dx*dx)
 		self.Up = U0
 		self.U = np.zeros(np.shape(U0))
-		self.PDE.Assemble(D,self.a,0)
+		self.PDE.Assemble(dt,dx,r_m,c_m,r_l)
 		self.PDE.Precondition(self.PDE.A)
 
 	def AddSpine(self,drift=0.01):
