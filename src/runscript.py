@@ -6,7 +6,7 @@ import matplotlib.pyplot as mpl,matplotlib.animation as animation
 n_spines = 4
 
 m = 101
-T = 30
+T = 100
 dx = 1.0/(m+1)
 dt = dx**2/2.0
 D = np.ones(m)
@@ -19,7 +19,7 @@ dendrite = Dendrite(dt,m)
 dendrite.SetInitialCondition(InitialCondition(x),D)
 
 for i in xrange(n_spines):
-	dendrite.AddSpine()
+	dendrite.AddSpine(drift=0.1)
 
 im = []
 fig = mpl.figure()

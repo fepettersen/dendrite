@@ -64,8 +64,8 @@ class Dendrite:
 				spine.AddSpike()
 			for j in xrange(steps):
 				spine.Solve()
-			if len(spine.Ions)>0:
-				print "spine #",i," has %d \"ions\" "%len(spine.Ions)
+			# if len(spine.Ions)>0:
+			# 	print "spine #",i," has %d \"ions\" "%len(spine.Ions)
 			m0 = self.indeces[i][0]
 			n0 = self.indeces[i][1]
 			self.Combine(spine,m0,n0)
