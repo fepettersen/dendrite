@@ -4,15 +4,18 @@ from diff import Diff as Diffusion
 
 class Dendrite:
 	"""docstring for Dendrite"""
-	def __init__(self,dt,mesh_points,max_spine_size = 5):
+	def __init__(self,dt,mesh_points,PDE = "diffusion",max_spine_size = 5):
 		self.m = mesh_points
 		dx = 1.0/(self.m+1)
 		self.a = dt/(2*dx*dx)
-		
-		self.PDE = Diffusion(dt,dx,0)
+		if PDE == "diffusion":
+			self.PDE = Diffusion(dt,dx,0)
+		elif PDE == "cable":
+			self.PDE = CableEquation(dt,dx,0)
 
 		self.spines  = []
 		self.indeces = []
+		self.spine_indeces = []
 
 		self.max_spine_contact_point = max_spine_size
 		self.spine_spike_probability_threshold = 1e-3
@@ -21,28 +24,30 @@ class Dendrite:
 	def SetSpineSpikeProbabilityThreshold(self,value):
 		self.spine_spike_probability_threshold = value
 
-	# def SetInitialCondition(self,U0,D,v=0):
-	# 	dx = 1.0/(self.m+1)
-	# 	dt = self.a*(2*dx*dx)
-	# 	drift = v*dt/(2*dx)
-	# 	self.Up = U0
-	# 	self.U = np.zeros(np.shape(U0))
-	# 	self.PDE.Assemble(D,self.a,0,drift)
-	# 	self.PDE.Precondition(self.PDE.A)
-
-	def SetInitialCondition(self,U0,r_m,c_m,r_l):
+	def SetInitialCondition(self,U0,D,v=0):
 		dx = 1.0/(self.m+1)
 		dt = self.a*(2*dx*dx)
+		drift = v*dt/(2*dx)
 		self.Up = U0
 		self.U = np.zeros(np.shape(U0))
-		self.PDE.Assemble(dt,dx,r_m,c_m,r_l)
+		self.PDE.Assemble(D,self.a,0,drift)
 		self.PDE.Precondition(self.PDE.A)
+
+	# def SetInitialCondition(self,U0,r_m,c_m,r_l):
+	# 	dx = 1.0/(self.m+1)
+	# 	dt = self.a*(2*dx*dx)
+	# 	self.Up = U0
+	# 	self.U = np.zeros(np.shape(U0))
+	# 	self.PDE.Assemble(dt,dx,r_m,c_m,r_l)
+	# 	self.PDE.Precondition(self.PDE.A)
 
 	def AddSpine(self,drift=0.01):
 		"""m is the total number of mesh-points on the dendrite"""
 		m0 = 0
 		n0 = self.m+1
-		m0 = random.randint(2,self.m-2)
+		while not self.AcceptSpinePlacement(m0):
+			m0 = random.randint(2,self.m-2)
+		self.spine_indeces.append(m0)
 		while n0>=self.m:
 			n0 = random.randint(m0+1,m0+self.max_spine_contact_point)
 
@@ -50,6 +55,12 @@ class Dendrite:
 		self.indeces.append([m0,n0])
 		self.spines[-1].SetDrift(drift)
 		print "spine added at index %d, %d"%(m0,n0)
+
+	def AcceptSpinePlacement(self,m):
+		for i in self.spine_indeces:
+			if abs(m-i)<self.max_spine_contact_point and m>1:
+				return False
+		return True
 
 	def Combine(self,spine,m,n):
 		DX = 1.0/(n-m+1)

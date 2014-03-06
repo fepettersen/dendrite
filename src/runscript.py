@@ -4,12 +4,13 @@ import numpy as np, glob
 import matplotlib.pyplot as mpl,matplotlib.animation as animation
 
 
-n_spines = 0
+n_spines = 3
 
 m = 101
 T = 100
 dx = 1.0/(m+1)
 dt = dx**2/2.0
+
 D = np.ones(m)
 drift = 0.3
 
@@ -31,7 +32,7 @@ def InitialCondition(x,x0=0.1,sigma=0.07):
 
 dendrite = Dendrite(dt,m)
 # dendrite.SetInitialCondition(InitialCondition(x),D*2,drift)
-dendrite.SetInitialCondition(InitialCondition(x),rm,cm,rl)
+dendrite.SetInitialCondition(InitialCondition(x),D,drift)
 
 for i in xrange(n_spines):
 	dendrite.AddSpine(drift=0.1)

@@ -10,100 +10,79 @@ class Diff:
 		self.n = n = 1
 		self.x = np.linspace(x0,x1,self.m)
 
-	# def Assemble(self,D,a,b,v=0):
-	# 	"""Assemble the matrix A which will be constant as long as dt is constant, 
-	# 	and make a LU decomposition of A.
-	# 	D is the diffusion \"constant\" given as a np vector, a and b are the 
-	# 	prefactors a = dt/(2*dx**2) and b = dt/(2*dy**2)"""
+	def Assemble(self,D,a,b,v=0):
+		"""Assemble the matrix A which will be constant as long as dt is constant, 
+		and make a LU decomposition of A.
+		D is the diffusion \"constant\" given as a np vector, a and b are the 
+		prefactors a = dt/(2*dx**2) and b = dt/(2*dy**2)"""
 
-	# 	drift = v
-	# 	if not np.shape(D):
-	# 		import sys
-	# 		print "Cannot assemble from scalar diffusion constant. Use D = np.ones(..)*D. \n exiting \n "
-	# 		sys.exit(1)
+		drift = v
+		if not np.shape(D):
+			import sys
+			print "Cannot assemble from scalar diffusion constant. Use D = np.ones(..)*D. \n exiting \n "
+			sys.exit(1)
 
-	# 	try:
-	# 		m,n = np.shape(D)
-	# 	except ValueError:
-	# 		m = len(D)
-	# 		n = 1
-	# 	self.m = m
-	# 	self.n = n
-	# 	N = m*n
-	# 	self.A = np.zeros((N,N))
-	# 	if n==1:
-	# 		k=0
-	# 		self.A[k,k] = 1+2*a*(D[1]+D[0])
-	# 		self.A[k,k+1] = -2*a*(D[0]+D[1])
-	# 		k+=1
-	# 		for i in xrange(1,m-1):
-	# 			self.A[k,k] = 1+a*D[i+1]+2*a*D[i] +a*D[i-1]
-	# 			self.A[k,k+1] = -a*(D[i+1]+D[i])+drift
-	# 			self.A[k,k-1] = -a*(D[i-1]+D[i])+drift
-	# 			k+=1
-	# 		self.A[k,k] = 1+2*a*(D[m-2]+D[m-1])
-	# 		self.A[k,k-1] = -2*a*(D[m-1]+D[m-2])
-	# 		return
-	# 	k=0
-	# 	for i in xrange(m):
-	# 		self.A[i,i+n] = -2*a*(D[0,i]+D[1,i]);
-	# 		self.A[N-1-i,N-i-n-1] = -2*a*(D[m-1,m-1-i]+D[m-2,m-1-i]);
-	# 		for j in xrange(n):
-	# 			if j==0:
-	# 				self.A[k,k+1] = -2*b*(D[i,j+1]+D[i,j])
-	# 				if i==0:
-	# 					self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
-	# 				elif i==m-1:
-	# 					self.A[k,k-1] = 0
-	# 					self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
-	# 				else:
-	# 					self.A[k,k-1] = 0
-	# 					self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
-	# 			elif j==n-1:
-	# 				self.A[k,k-1] = -2*b*(D[i,j-1]+D[i,j])
-	# 				if i==0:
-	# 					self.A[k,k+1] = 0
-	# 					self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j-1]
-	# 				elif i==m-1:
-	# 					self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) +2*b*D[i,j-1]
-	# 				else:
-	# 					self.A[k,k+1] = 0
-	# 					self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) +2*b*D[i,j-1]
-	# 			elif j!=0:
-	# 				self.A[k,k+1] = -b*(D[i,j+1]+D[i,j])
-	# 				self.A[k,k-1] = -b*(D[i,j-1]+D[i,j])
-	# 				if i==0:
-	# 					self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
-	# 				elif i==m-1:
-	# 					self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
-	# 				else:
-	# 					self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
-	# 			if (k>(m-1) and k<(N-m)):
-	# 				self.A[k,k+m] = -a*(D[i+1,j]+D[i,j]);
-	# 				self.A[k,k-m] = -a*(D[i-1,j]+D[i,j]);
-	# 			k+=1
-
-	def Assemble(self,dt,dx,rm,cm,rl):
-		"""Assemble the matrix A which is used to solve the linear system at each time-step"""
-		tau = cm*rm
-		lambda2 = rm/rl
-		print "tau = ",tau,"\nlambda^2 = ",lambda2
-		m = self.m
-		n = 1
+		try:
+			m,n = np.shape(D)
+		except ValueError:
+			m = len(D)
+			n = 1
+		self.m = m
+		self.n = n
 		N = m*n
 		self.A = np.zeros((N,N))
 		if n==1:
 			k=0
-			self.A[k,k] = 1 + dt/tau + (2*lambda2*dt)/(tau*dx*dx)
-			self.A[k,k+1] = -2*(lambda2*dt)/(tau*dx*dx)
+			self.A[k,k] = 1+2*a*(D[1]+D[0])
+			self.A[k,k+1] = -2*a*(D[0]+D[1])
 			k+=1
 			for i in xrange(1,m-1):
-				self.A[k,k] = 1 + dt/tau + (2*lambda2*dt)/(tau*dx*dx)
-				self.A[k,k+1] = -(lambda2*dt)/(tau*dx*dx)
-				self.A[k,k-1] = -(lambda2*dt)/(tau*dx*dx)
+				self.A[k,k] = 1+a*D[i+1]+2*a*D[i] +a*D[i-1]
+				self.A[k,k+1] = -a*(D[i+1]+D[i])+drift
+				self.A[k,k-1] = -a*(D[i-1]+D[i])+drift
 				k+=1
-			self.A[k,k] = 1 + dt/tau + (2*lambda2*dt)/(tau*dx*dx)
-			self.A[k,k-1] = -2*(lambda2*dt)/(tau*dx*dx)
+			self.A[k,k] = 1+2*a*(D[m-2]+D[m-1])
+			self.A[k,k-1] = -2*a*(D[m-1]+D[m-2])
+			return
+		k=0
+		for i in xrange(m):
+			self.A[i,i+n] = -2*a*(D[0,i]+D[1,i]);
+			self.A[N-1-i,N-i-n-1] = -2*a*(D[m-1,m-1-i]+D[m-2,m-1-i]);
+			for j in xrange(n):
+				if j==0:
+					self.A[k,k+1] = -2*b*(D[i,j+1]+D[i,j])
+					if i==0:
+						self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
+					elif i==m-1:
+						self.A[k,k-1] = 0
+						self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
+					else:
+						self.A[k,k-1] = 0
+						self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) + 2*b*D[i,j+1]
+				elif j==n-1:
+					self.A[k,k-1] = -2*b*(D[i,j-1]+D[i,j])
+					if i==0:
+						self.A[k,k+1] = 0
+						self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + 2*b*D[i,j-1]
+					elif i==m-1:
+						self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) +2*b*D[i,j-1]
+					else:
+						self.A[k,k+1] = 0
+						self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) +2*b*D[i,j-1]
+				elif j!=0:
+					self.A[k,k+1] = -b*(D[i,j+1]+D[i,j])
+					self.A[k,k-1] = -b*(D[i,j-1]+D[i,j])
+					if i==0:
+						self.A[k,k] = 1+2*a*D[i+1,j] + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
+					elif i==m-1:
+						self.A[k,k] = 1+2*a*D[i-1,j] + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
+					else:
+						self.A[k,k] = 1+a*(D[i+1,j]+D[i-1,j]) + D[i,j]*(2*a+2*b) + b*(D[i,j+1]+D[i,j-1])
+				if (k>(m-1) and k<(N-m)):
+					self.A[k,k+m] = -a*(D[i+1,j]+D[i,j]);
+					self.A[k,k-m] = -a*(D[i-1,j]+D[i,j]);
+				k+=1
+
 
 	def Precondition(self,A):
 		self.preconditioned = True
