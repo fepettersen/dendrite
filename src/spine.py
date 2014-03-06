@@ -9,13 +9,15 @@ class Spine:
 		# Must implement variable diffusion "constant"
 		some_factor = 0.1
 		self.neck_width = some_factor*neck_width
-		self.neck_length = 1+random.random()*some_factor*self.neck_width
+		self.neck_length = (1-random.random())*self.neck_width
 		self.head_height = 1-self.neck_length
 		self.head_width = 0.5*(1-self.neck_width)
 		self.spike_probability = 0.0003	# This number should probably be chosen more carefully
 		self.Ions = []					# linked list of walkers
 		self.dendrite_boundary = []		# linked list of walkers that have moved into the dendrite
 		self.a = self.head_height/self.head_width
+		self.left_neck_limit = 0.5*(1-self.neck_width)
+		self.right_neck_limit = 0.5*(1+self.neck_width)
 		self.drift = 0.0
 
 		self._x1 = self._y1 = 1
@@ -26,7 +28,7 @@ class Spine:
 		self.drift = val
 
 	def right_limit(self,x):
-		return self.a*x-self.a*0.5*(1+self.neck_width)+self.neck_length
+		return self.a*(x-0.5*(1+self.neck_width))+self.neck_length
 
 	def left_limit(self,x):
 		return 1-self.a*x
@@ -55,22 +57,32 @@ class Spine:
 		"""pos is a 2d vector with position [x,y]. 
 		Implements reflecting boundaries and stores ions that have "left" the
 		spine in the dendrite_boundary list."""
-		if Ion.r[1]>self._y1:
-			Ion.r[1] -= Ion.r[1]-self._y1
-		elif Ion.r[0]>0.5 and Ion.r[1]<self.right_limit(Ion.r[0]):
-			Ion.r[1] += self.right_limit(Ion.r[0])-Ion.r[1]
-		elif Ion.r[0]<0.5 and Ion.r[1]<self.left_limit(Ion.r[0]):
-			Ion.r[1] += self.left_limit(Ion.r[0])-Ion.r[1]
-		elif Ion.r[1]<=self.neck_length:
-			if Ion.r[0]<0.5*(1-self.neck_width):
-				Ion.r[0] += 0.5*(1-self.neck_width)-Ion.r[0]
-			elif Ion.r[0]>0.5*(1-self.neck_width):
-				Ion.r[0] += 0.5*(1-self.neck_width)-Ion.r[0]
-		if Ion.r[1]<self._y0:
-			#ion has left spine
+		if Ion.r[1]>= self.neck_length:
+			tmpr = self.right_limit(Ion.r[0])
+			tmpl = self.left_limit(Ion.r[0])
+			if Ion.r[1]<tmpr:
+				Ion.r[0] -= (Ion.r[1]-tmpr)/self.a
+				Ion.r[1] += (Ion.r[1]-tmpr)
+			elif Ion.r[1]<tmpl:
+				Ion.r[0] += (Ion.r[1]-tmpl)/self.a
+				Ion.r[1] += (Ion.r[1]-tmpr)
+			if Ion.r[1]>self._y1:
+				Ion.r[1] = self._y1-(Ion.r[1]-self._y1)
+			if Ion.r[0]<self._x0:
+				Ion.r[0] = self._x0 + (Ion.r[0] - self._x0)
+			elif Ion.r[0]>self._x1:
+				Ion.r[0] = self._x1 - (Ion.r[0]-self._x1)
+		else:
+			if Ion.r[0]<self.left_neck_limit:
+				Ion.r[0] = self.left_neck_limit+(self.left_neck_limit - Ion.r[0])
+			elif Ion.r[0]>self.right_neck_limit:
+				Ion.r[0] = self.right_neck_limit-(Ion.r[0] - self.right_neck_limit)
+			
+		if Ion.r[1]<=self._y0:
+			#ion has left spine, last test
 			self.dendrite_boundary.append(Ion)
 			self.Ions.remove(Ion)
-		
+			return
 		# if Ion.r[0]>self._x1:
 		# 	Ion.r[0] -= Ion.r[0]-self._x1
 		# elif Ion.r[0]<self._x0:
